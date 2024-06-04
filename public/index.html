@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            width: 100%;
+            margin-bottom: 0px;
+            background-color: blue; /* Background color for header */
+            color: white; /* Text color for header */
+            padding: 10px; /* Add padding for spacing */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add box shadow */
+            border-radius: 5px; /* Add border radius for rounded corners */
+        }
+        .logout-button {
+            position: absolute; /* Set position to absolute */
+            top: 40px; /* Adjust top position as needed */
+            right: 50px; /* Adjust right position as needed */
+            padding: 8px 16px; /* Add padding for button */
+            background-color: red; /* Background color for button */
+            color: white; /* Text color for button */
+            border: none; /* Remove border */
+            border-radius: 20px; /* Add border radius for rounded corners */
+            cursor: pointer; /* Add cursor pointer */
+        }
+        .sensor {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid rgb(22, 17, 17);
+            border-radius: 5px;
+            width: 300px; /* Adjusted width to accommodate charts */
+            text-align: center;
+        }
+        .sensor h2 {
+            margin-bottom: 5px;
+        }
+        .chart-container {
+            width: 100%; /* Match sensor width */
+            height: 150px; /* Adjust chart height as needed */
+        }
+        .sensor-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-width: 1200px; /* Adjust as needed */
+        }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Sensor Dashboard</h1>
+        <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+
+    </body>
+    <div class="sensor-container">
+        <div id="heartRate" class="sensor">
+            <h2>Heart Rate (BPM)</h2>
+            <p id="heartRateValue">-- BPM</p>
+            <div class="chart-container">
+                <canvas id="heartRateChart"></canvas>
+            </div>
+        </div>
+
+        <div id="alcohol" class="sensor">
+            <h2>Alcohol (PPM)</h2>
+            <p id="alcoholValue">-- PPM</p>
+            <div class="chart-container">
+                <canvas id="alcoholChart"></canvas>
+            </div>
+        </div>
+
+        <div id="ultrasonic" class="sensor">
+            <h2>Ultrasonic (CM)</h2>
+            <p id="ultrasonicValue">-- CM</p>
+            <div class="chart-container">
+                <canvas id="ultrasonicChart"></canvas>
+            </div>
+        </div>
+
+        <div id="tempHumidity" class="sensor">
+            <h2>Temperature ( ํC)</h2>
+            <p id="tempValue">-- ํC</p>
+            <div class="chart-container">
+                <canvas id="tempChart"></canvas>
+            </div>
+        </div>
+
+        <div id="humidity" class="sensor">
+            <h2>Humidity (%)</h2>
+            <p id="humidValue">-- %</p>
+            <div class="chart-container">
+                <canvas id="humidChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const heartRateChart = new Chart(document.getElementById('heartRateChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Heart Rate',
+                    data: [],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        const alcoholChart = new Chart(document.getElementById('alcoholChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Alcohol',
+                    data: [],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        const ultrasonicChart = new Chart(document.getElementById('ultrasonicChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Ultrasonic',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        const tempChart = new Chart(document.getElementById('tempChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Temperature',
+                    data: [],
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        const humidChart = new Chart(document.getElementById('humidChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Humidity',
+                    data: [],
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+
+        socket.on('heartRateData', (data) => {
+            console.log('Received heartRateData:', data);
+            document.getElementById('heartRateValue').textContent = data;
+            addData(heartRateChart, data);
+        });
+
+        socket.on('alcoholData', (data) => {
+            console.log('Received alcoholData:', data);
+            document.getElementById('alcoholValue').textContent = data;
+            addData(alcoholChart, data);
+        });
+
+        socket.on('ultrasonicData', (data) => {
+            console.log('Received ultrasonicData:', data);
+            document.getElementById('ultrasonicValue').textContent = data;
+            addData(ultrasonicChart, data);
+        });
+
+        socket.on('tempData', (data) => {
+            console.log('Received tempData:', data);
+            document.getElementById('tempValue').textContent = data;
+            addData(tempChart, data);
+        });
+
+        socket.on('humidData', (data) => {
+            console.log('Received humidData:', data);
+            document.getElementById('humidValue').textContent = data;
+            addData(humidChart, data);
+        });
+
+        function addData(chart, data) {
+            const now = new Date().toLocaleTimeString();
+            chart.data.labels.push(now);
+            chart.data.datasets[0].data.push(data);
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.update();
+        }
+
+        function logout() {
+            // Redirect to login page
+            window.location.href = '/login';
+        }
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+        });
+
+        socket.on('error', (error) => {
+            console.error('Error:', error);
+        });
+
+    </script>
+</body>
+</html>
