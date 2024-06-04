@@ -6,6 +6,7 @@
 
 
 
+.
 Subscribed to topics: [
 
   'sensor/heart-rate',
@@ -22,6 +23,9 @@ Subscribed to topics: [
 
 
 
+
+
+.
 you'll see all of the Links in the Terminal when the code is running
 
 Have a good day!
